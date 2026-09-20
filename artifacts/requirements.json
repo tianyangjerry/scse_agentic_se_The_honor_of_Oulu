@@ -1,0 +1,11 @@
+{
+  "goal": "Move toward the goal while avoiding blocked directions",
+  "allowed_actions": [
+    "FORWARD",
+    "LEFT",
+    "RIGHT",
+    "STOP"
+  ],
+  "safe_stop": true,
+  "avoid_obstacles": true
+}

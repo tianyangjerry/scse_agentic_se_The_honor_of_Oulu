@@ -1,0 +1,8 @@
+1. The navigation component should prioritize moving towards the goal when safe.
+2. The navigation component should avoid moving into any blocked direction.
+3. If no safe direction is available, the navigation component should stop.
+4. The navigation component should receive information about whether the path in front, to the left, and to the right is blocked.
+5. The navigation component should receive information about whether the goal is ahead, to the left, or to the right.
+6. The navigation component should be able to determine and prefer moving towards the goal whenever safe.
+7. The navigation component should be able to determine and avoid moving into any blocked direction.
+8. The navigation component should be able to determine and stop if no safe direction is available.
