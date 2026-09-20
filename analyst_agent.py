@@ -13,6 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 
+
 REQUIRED_KEYS = ("goal", "allowed_actions", "safe_stop", "avoid_obstacles")
 ALLOWED_ACTIONS = ["FORWARD", "LEFT", "RIGHT", "STOP"]
 
