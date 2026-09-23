@@ -118,7 +118,15 @@ def _ollama_settings() -> tuple[str, str, float]:
     return base_url, model, timeout
 
 
-def ask_qwen(prompt: str, *, json_mode: bool = False) -> str:
+def ask_qwen(
+    prompt: str,
+    *,
+    json_mode: bool = False,
+    system_prompt: str = (
+        "You are a careful requirements analyst. Follow the user's "
+        "requested output format exactly."
+    ),
+) -> str:
     """Ask the locally running Qwen model through Ollama's HTTP API."""
     base_url, model, timeout = _ollama_settings()
     payload: dict[str, Any] = {
@@ -126,10 +134,7 @@ def ask_qwen(prompt: str, *, json_mode: bool = False) -> str:
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "You are a careful requirements analyst. Follow the user's "
-                    "requested output format exactly."
-                ),
+                "content": system_prompt,
             },
             {"role": "user", "content": prompt},
         ],
