@@ -6,15 +6,15 @@
       "action": "STOP"
     },
     {
-      "condition": "The goal direction is safe and unobstructed",
+      "condition": "The goal direction is safe and not blocked",
       "action": "FORWARD"
     },
     {
-      "condition": "The left direction is safe and unobstructed",
+      "condition": "The left direction is safe and not blocked",
       "action": "LEFT"
     },
     {
-      "condition": "The right direction is safe and unobstructed",
+      "condition": "The right direction is safe and not blocked",
       "action": "RIGHT"
     }
   ],

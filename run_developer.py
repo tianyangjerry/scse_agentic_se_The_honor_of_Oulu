@@ -21,7 +21,7 @@ def main() -> None:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path(__file__).with_name("navigation_logic.py"),
+        default=Path(__file__).with_name("generated") / "navigation_logic.py",
         help="Path for the generated navigation module",
     )
     args = parser.parse_args()

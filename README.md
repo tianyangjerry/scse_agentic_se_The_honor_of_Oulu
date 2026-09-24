@@ -1,42 +1,74 @@
-# The honor of Oulu - Agentic Software Engineering
+# SCSE '26 Robot Navigation Agent Pipeline
 
-Suggested GitHub repository name: `scse_agentic_se_The_honor_of_Oulu`
+This repository combines the Requirements Engineering, Plan and Develop, and
+Testing course projects into one runnable robot-navigation pipeline.
 
-## Pipeline
+## Pipeline artifacts
 
-- `brief_to_req.py` asks Qwen to produce the readable requirements in `robot_requirements.txt`.
-- `analyst_agent.py` asks Qwen for the strict JSON object and validates its schema.
-- `run_analyst.py` runs the analyst and writes `artifacts/requirements.json`.
-- `planner_agent.py` converts the validated requirements into a navigation plan.
-- `run_planner.py` runs the planner and writes `artifacts/plan.json`.
-- `developer_agent.py` converts the plan into validated Python navigation code.
-- `run_developer.py` runs the developer and writes `navigation_logic.py`.
-- `robot_requirements.txt` is the readable requirements artifact.
-- `artifacts/requirements.json` is the validated JSON artifact.
-- `artifacts/plan.json` is the validated planner artifact.
+```text
+brief.txt
+  -> Analyst Agent -> artifacts/requirements.json
+  -> Planner Agent -> artifacts/plan.json
+  -> Developer Agent -> generated/navigation_logic.py
+  -> behavior tests -> decide_next_move(state)
+```
 
-The agents are intentionally isolated: Planner receives only the validated
-requirements artifact, and Developer receives only the validated plan artifact.
+The Analyst converts the original brief into validated requirements. The
+Planner receives only that requirements artifact. The Developer receives only
+the validated plan and generates a module whose public function is
+`decide_next_move(state)`. The state dictionary contains `goal_ahead`,
+`goal_on_left`, `goal_on_right`, `front_blocked`, `left_blocked`, and
+`right_blocked` booleans. Safe goal directions take priority; if the goal
+direction is blocked, the fallback order is FORWARD, LEFT, RIGHT. Missing
+blocked-state values are treated as blocked, and the robot returns STOP when
+no safe direction remains.
 
-## Run with Ollama and Qwen
+## Run the pipeline smoke tests
 
-Make sure Ollama is running and the model is installed:
+Install and start Ollama, then make sure Qwen is available:
 
 ```powershell
 ollama pull qwen2.5:3b
-python brief_to_req.py
-python run_analyst.py
-python run_planner.py
-python run_developer.py
+python test_analyst.py
+python test_planner.py
+python test_developer.py
 ```
 
-The scripts call `http://127.0.0.1:11434/api/chat` directly, so no Python
-client package or cloud API key is required. Optional environment variables are
+Each smoke test runs its real agent, lets the agent validate its output, saves
+the resulting artifact, and displays it. Run the tests in order because each
+stage consumes the preceding stage's artifact.
+
+The Developer smoke test saves the same validated module to
+`artifacts/navigation_logic.py` (the stage artifact) and
+`generated/navigation_logic.py` (the module used by behavior tests).
+
+The agents call Ollama's local HTTP API. Optional environment variables are
 `OLLAMA_HOST`, `OLLAMA_MODEL`, and `OLLAMA_TIMEOUT`.
 
-The planner and developer scripts support custom paths, for example:
+## Run behavior tests
+
+After generating `generated/navigation_logic.py`, run:
 
 ```powershell
-python run_planner.py --requirements artifacts/requirements.json --output artifacts/plan.json
-python run_developer.py --plan artifacts/plan.json --output navigation_logic.py
+python -m unittest -v test_generated_navigation_logic.py
 ```
+
+The behavior suite checks all 64 combinations of the three goal indicators and
+three blocked-path indicators. It also checks goal preference, legal actions,
+obstacle avoidance, and stopping when every direction is blocked.
+
+To demonstrate bug detection for the course exercise, temporarily change a
+goal-direction decision in `generated/navigation_logic.py` to return an
+incorrect action and rerun the behavior suite. At least one test must fail.
+Restore the correct implementation and rerun the suite; all tests should pass.
+
+## Files
+
+- `analyst_agent.py`, `run_analyst.py`, `brief_to_req.py`: requirements stage.
+- `planner_agent.py`, `run_planner.py`: planning stage.
+- `developer_agent.py`, `run_developer.py`: code-generation stage.
+- `test_analyst.py`, `test_planner.py`, `test_developer.py`: pipeline smoke tests.
+- `test_generated_navigation_logic.py`: navigation behavior tests.
+- `artifacts/requirements.json`, `artifacts/plan.json`,
+  `artifacts/navigation_logic.py`: validated pipeline data and generated code.
+- `generated/navigation_logic.py`: generated robot navigation module.

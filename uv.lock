@@ -1,8 +1,8 @@
 version = 1
 revision = 3
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 
 [[package]]
-name = "project"
+name = "scse-agentic-se-the-honor-of-oulu"
 version = "0.1.0"
 source = { virtual = "." }

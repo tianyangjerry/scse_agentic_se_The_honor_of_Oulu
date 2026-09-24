@@ -10,26 +10,25 @@ from analyst_agent import ask_qwen
 from planner_agent import validate_plan
 
 
-REQUIRED_FUNCTION = "choose_action"
+REQUIRED_FUNCTION = "decide_next_move"
 
 REFERENCE_NAVIGATION_CODE = '''"""Conservative reference implementation for safe navigation."""
 
 
-def choose_action(goal_direction, blocked, goal_reached=False):
-    if goal_reached:
-        return "STOP"
-    direction = goal_direction.upper() if goal_direction is not None else ""
-    if direction == "AHEAD":
-        direction = "FORWARD"
-
-    def is_safe(action):
-        return blocked.get(action.lower(), True) is False
-
-    if direction in ("FORWARD", "LEFT", "RIGHT") and is_safe(direction):
-        return direction
-    for action in ("FORWARD", "LEFT", "RIGHT"):
-        if is_safe(action):
-            return action
+def decide_next_move(state):
+    """Choose the goal direction when safe, otherwise the first safe route."""
+    if state.get("goal_ahead") and not state.get("front_blocked", True):
+        return "FORWARD"
+    if state.get("goal_on_left") and not state.get("left_blocked", True):
+        return "LEFT"
+    if state.get("goal_on_right") and not state.get("right_blocked", True):
+        return "RIGHT"
+    if not state.get("front_blocked", True):
+        return "FORWARD"
+    if not state.get("left_blocked", True):
+        return "LEFT"
+    if not state.get("right_blocked", True):
+        return "RIGHT"
     return "STOP"
 '''
 
@@ -43,32 +42,44 @@ You are a Python developer implementing a safe mobile-robot navigation plan.
 Implement the validated plan below as a small, self-contained Python module.
 Return Python source code only, optionally inside one Markdown code fence.
 
-The module must define this function:
+The module must define this function as its public entry point:
 
-    choose_action(goal_direction, blocked, goal_reached=False) -> str
+    decide_next_move(state) -> str
 
-Requirements for choose_action:
-- Return STOP when goal_reached is true.
-- Accept goal_direction as FORWARD, LEFT, RIGHT, or None.
-- Accept blocked as a mapping whose forward/left/right keys indicate whether
-  that direction is blocked. Missing directions must be treated as blocked.
-- Prefer the requested goal direction when it is safe.
-- Never return a blocked direction.
-- If no safe direction exists, return STOP.
-- Return only FORWARD, LEFT, RIGHT, or STOP.
-
-Use this exact decision order: if goal_reached, return STOP; otherwise try the
-normalized goal direction if blocked.get(direction.lower(), True) is False;
-then try FORWARD, LEFT, RIGHT in that order using the same safety check; if
-none is safe, return STOP. A value of True means blocked and False means safe.
-Do not assume a direction is safe merely because it appears in the input.
+The state dictionary has boolean keys: goal_ahead, goal_on_left, goal_on_right,
+front_blocked, left_blocked, and right_blocked. Missing blocked keys must be
+treated as blocked. Prefer the goal direction when it is safe. If that direction
+is blocked, choose the first safe fallback in FORWARD, LEFT, RIGHT order. Never
+return a blocked direction. Return STOP if no direction is safe. The only valid
+returns are FORWARD, LEFT, RIGHT, and STOP.
 
 Examples that the implementation must satisfy:
-- choose_action("RIGHT", {{"forward": False, "left": True, "right": False}}) returns "RIGHT".
-- choose_action("LEFT", {{"forward": True, "left": True, "right": False}}) returns "RIGHT".
-- choose_action("FORWARD", {{"forward": True, "left": True, "right": True}}) returns "STOP".
+- goal on left, left clear, front clear -> LEFT.
+- goal on left, left blocked, right clear -> FORWARD if front is clear, otherwise RIGHT.
+- all three directions blocked -> STOP.
 
 Do not use external packages, I/O, network access, or invented robot APIs.
+Other programs must call decide_next_move(state); do not require them to call
+any helper function.
+
+Use this reference decision structure and adapt it only if needed to implement
+the validated plan:
+```python
+def decide_next_move(state):
+    if state.get("goal_ahead") and not state.get("front_blocked", True):
+        return "FORWARD"
+    if state.get("goal_on_left") and not state.get("left_blocked", True):
+        return "LEFT"
+    if state.get("goal_on_right") and not state.get("right_blocked", True):
+        return "RIGHT"
+    if not state.get("front_blocked", True):
+        return "FORWARD"
+    if not state.get("left_blocked", True):
+        return "LEFT"
+    if not state.get("right_blocked", True):
+        return "RIGHT"
+    return "STOP"
+```
 
 Validated plan:
 ---
@@ -120,16 +131,20 @@ def validate_code(code: Any) -> str:
 
     namespace: dict[str, Any] = {}
     exec(compile(tree, "<navigation_logic>", "exec"), {}, namespace)
-    choose_action = namespace[REQUIRED_FUNCTION]
+    decide_next_move = namespace[REQUIRED_FUNCTION]
     checks = (
-        ("RIGHT", {"forward": False, "left": True, "right": False}, False, "RIGHT"),
-        ("LEFT", {"forward": True, "left": True, "right": False}, False, "RIGHT"),
-        ("FORWARD", {"forward": True, "left": True, "right": True}, False, "STOP"),
-        ("FORWARD", {"forward": False, "left": False, "right": False}, True, "STOP"),
+        ({"goal_ahead": True, "goal_on_left": False, "goal_on_right": False,
+          "front_blocked": False, "left_blocked": False, "right_blocked": False}, "FORWARD"),
+        ({"goal_ahead": False, "goal_on_left": True, "goal_on_right": False,
+          "front_blocked": False, "left_blocked": False, "right_blocked": False}, "LEFT"),
+        ({"goal_ahead": False, "goal_on_left": True, "goal_on_right": False,
+          "front_blocked": True, "left_blocked": True, "right_blocked": False}, "RIGHT"),
+        ({"goal_ahead": False, "goal_on_left": False, "goal_on_right": False,
+          "front_blocked": True, "left_blocked": True, "right_blocked": True}, "STOP"),
     )
-    for goal_direction, blocked, goal_reached, expected in checks:
+    for state, expected in checks:
         try:
-            actual = choose_action(goal_direction, blocked, goal_reached)
+            actual = decide_next_move(state)
         except Exception as exc:
             raise ValueError(f"Navigation function failed safety check: {exc}") from exc
         if actual != expected:
