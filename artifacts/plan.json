@@ -2,21 +2,21 @@
   "strategy": "Navigate towards the goal while avoiding obstacles and stopping upon reaching the goal or no safe direction remaining",
   "decisions": [
     {
-      "condition": "The robot is at the goal or no safe direction remains",
-      "action": "STOP"
-    },
-    {
       "condition": "The goal direction is safe and not blocked",
       "action": "FORWARD"
     },
     {
-      "condition": "The left direction is safe and not blocked",
+      "condition": "The goal direction is blocked and safe alternatives are available",
       "action": "LEFT"
     },
     {
-      "condition": "The right direction is safe and not blocked",
+      "condition": "The goal direction is blocked and no safe alternatives are available",
       "action": "RIGHT"
+    },
+    {
+      "condition": "No safe direction remains",
+      "action": "STOP"
     }
   ],
-  "stop_condition": "The robot has reached the goal or no safe direction remains"
+  "stop_condition": "The goal has been reached or no safe direction remains"
 }

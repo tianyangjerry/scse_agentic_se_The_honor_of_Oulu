@@ -1,0 +1,7 @@
+{
+  "command": "C:\\Users\\yang\\Desktop\\project\\sc\\project\\scse_agentic_se_The_honor_of_Oulu\\.venv\\Scripts\\python.exe -m pytest C:\\Users\\yang\\Desktop\\project\\sc\\project\\scse_agentic_se_The_honor_of_Oulu\\generated\\test_navigation_logic.py -q",
+  "passed": true,
+  "returncode": 0,
+  "stdout": "...                                                                      [100%]\n3 passed in 0.02s\n",
+  "stderr": ""
+}

@@ -62,6 +62,45 @@ goal-direction decision in `generated/navigation_logic.py` to return an
 incorrect action and rerun the behavior suite. At least one test must fail.
 Restore the correct implementation and rerun the suite; all tests should pass.
 
+## Run the complete Integration and Simulation pipeline
+
+Install the declared dependencies into the project environment:
+
+```powershell
+uv sync
+```
+
+Then run the central orchestrator:
+
+```powershell
+.venv\Scripts\python.exe main.py
+```
+
+The orchestrator runs the Analyst, Planner, Developer, Test Agent, deterministic
+simulation, Reviewer, all four IR-SIM worlds, and the Benchmark Reviewer. It
+records every stage in `trace.log` and writes:
+
+- `artifacts/simulation_report.json`
+- `artifacts/review.json`
+- `artifacts/irsim_benchmark_report.json`
+- `artifacts/benchmark_review.json`
+- `artifacts/pipeline_summary.json`
+- `generated/test_navigation_logic.py`
+
+The four supplied worlds are `world_easy.yaml`, `world_medium.yaml`,
+`world_hard.yaml`, and `world_custom.yaml` under `irsim_worlds/`. For a visual
+run, use `run_visual.sh` in Bash/WSL or run the Python simulator directly in
+PowerShell:
+
+```powershell
+$env:MPLBACKEND = "Agg"
+.venv\Scripts\python.exe test_irsim_with_agent.py irsim_worlds\world_easy.yaml
+```
+
+If the benchmark reviewer reports a measured failure, `main.py` asks the
+Developer Agent for one evidence-based revision, updates the generated module,
+and reruns the simulation and benchmark.
+
 ## Files
 
 - `analyst_agent.py`, `run_analyst.py`, `brief_to_req.py`: requirements stage.
@@ -69,6 +108,12 @@ Restore the correct implementation and rerun the suite; all tests should pass.
 - `developer_agent.py`, `run_developer.py`: code-generation stage.
 - `test_analyst.py`, `test_planner.py`, `test_developer.py`: pipeline smoke tests.
 - `test_generated_navigation_logic.py`: navigation behavior tests.
+- `main.py`, `runner.py`: central orchestration and 64-state simulation.
+- `test_agent.py`, `reviewer_agent.py`: generated tests and simulation review.
+- `benchmark_irsim.py`, `reviewer_benchmark_agent.py`: IR-SIM benchmarking and
+  measured benchmark review.
+- `test_irsim_with_agent.py`, `run_visual.sh`, `irsim_worlds/`: supplied IR-SIM
+  runner, visual launcher, and four simulation worlds.
 - `artifacts/requirements.json`, `artifacts/plan.json`,
   `artifacts/navigation_logic.py`: validated pipeline data and generated code.
 - `generated/navigation_logic.py`: generated robot navigation module.

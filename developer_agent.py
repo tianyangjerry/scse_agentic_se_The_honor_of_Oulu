@@ -172,10 +172,81 @@ def run_developer(plan: dict[str, Any]) -> str:
         return validate_code(REFERENCE_NAVIGATION_CODE)
 
 
+def build_developer_revision_prompt(
+    original_code: str,
+    review: dict[str, Any],
+    benchmark_report: dict[str, Any],
+    requirements: dict[str, Any],
+    plan: dict[str, Any],
+) -> str:
+    """Build the context for one evidence-based navigation revision."""
+    validated_plan = validate_plan(plan)
+    return f"""
+You are revising a mobile-robot navigation module after simulation and
+benchmark review.
+
+Return Python source code only, optionally inside one Markdown code fence. The
+source must define decide_next_move(state), use no imports or I/O, and return
+only FORWARD, LEFT, RIGHT, or STOP. It must never choose a blocked direction,
+prefer a safe goal direction, and stop when no safe direction exists.
+
+Original navigation code:
+---
+{original_code}
+---
+
+Simulation review:
+---
+{json.dumps(review, indent=2)}
+---
+
+IR-SIM benchmark report:
+---
+{json.dumps(benchmark_report, indent=2)}
+---
+
+Validated requirements:
+---
+{json.dumps(requirements, indent=2)}
+---
+
+Validated plan:
+---
+{json.dumps(validated_plan, indent=2)}
+---
+""".strip()
+
+
+def run_developer_revision(
+    original_code: str,
+    review: dict[str, Any],
+    benchmark_report: dict[str, Any],
+    requirements: dict[str, Any],
+    plan: dict[str, Any],
+) -> str:
+    """Ask Qwen for a reviewed revision and apply the same safety validation."""
+    prompt = build_developer_revision_prompt(
+        original_code, review, benchmark_report, requirements, plan
+    )
+    raw_response = ask_qwen(
+        prompt,
+        system_prompt=(
+            "You are a careful Python developer. Return only safe, valid Python "
+            "source code for decide_next_move(state)."
+        ),
+    )
+    try:
+        return validate_code(raw_response)
+    except ValueError:
+        return validate_code(REFERENCE_NAVIGATION_CODE)
+
+
 __all__ = [
     "REQUIRED_FUNCTION",
     "REFERENCE_NAVIGATION_CODE",
     "build_developer_prompt",
+    "build_developer_revision_prompt",
     "run_developer",
+    "run_developer_revision",
     "validate_code",
 ]

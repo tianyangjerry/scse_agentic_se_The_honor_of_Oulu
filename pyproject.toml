@@ -2,4 +2,9 @@
 name = "scse-agentic-se-the-honor-of-oulu"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "ir-sim>=2.12.0",
+    "matplotlib>=3.11.0",
+    "numpy>=1.26.0",
+    "pytest>=9.1.0",
+]
