@@ -100,8 +100,18 @@ def _extract_code(response_text: str) -> str:
         first_line, separator, remainder = text.partition("\n")
         if first_line.strip().lower() in {"python", "py"}:
             text = remainder.strip() if separator else ""
-    elif "def choose_action" in text:
-        text = text[text.find("def choose_action") :].strip()
+    else:
+        # Drop leading prose lines until the rest parses, keeping helpers and
+        # module constants that appear before decide_next_move.
+        lines = text.splitlines()
+        for start in range(len(lines)):
+            candidate = "\n".join(lines[start:]).strip()
+            try:
+                ast.parse(candidate)
+            except SyntaxError:
+                continue
+            text = candidate
+            break
     if not text:
         raise ValueError("Qwen returned empty Python code")
     return text
@@ -129,8 +139,10 @@ def validate_code(code: Any) -> str:
         if isinstance(node, (ast.Import, ast.ImportFrom)):
             raise ValueError("Generated navigation code must not import modules")
 
+    # Use one namespace so helpers and module constants resolve as they would
+    # when the generated file is imported.
     namespace: dict[str, Any] = {}
-    exec(compile(tree, "<navigation_logic>", "exec"), {}, namespace)
+    exec(compile(tree, "<navigation_logic>", "exec"), namespace)
     decide_next_move = namespace[REQUIRED_FUNCTION]
     checks = (
         ({"goal_ahead": True, "goal_on_left": False, "goal_on_right": False,

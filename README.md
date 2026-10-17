@@ -108,6 +108,8 @@ and reruns the simulation and benchmark.
 - `developer_agent.py`, `run_developer.py`: code-generation stage.
 - `test_analyst.py`, `test_planner.py`, `test_developer.py`: pipeline smoke tests.
 - `test_generated_navigation_logic.py`: navigation behavior tests.
+- `test_developer_validation.py`: offline tests for the Developer Agent's code
+  extraction and validation (`python -m unittest -v test_developer_validation.py`).
 - `main.py`, `runner.py`: central orchestration and 64-state simulation.
 - `test_agent.py`, `reviewer_agent.py`: generated tests and simulation review.
 - `benchmark_irsim.py`, `reviewer_benchmark_agent.py`: IR-SIM benchmarking and
